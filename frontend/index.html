@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="/style.css" />
+<title>Solace AI — Clinical-Evidence Research Assistant</title>
+</head>
+<body>
+
+<!-- ================= LOGIN ================= -->
+<main class="app" id="loginView">
+  <section class="login">
+    <h1 class="logo">SOLACE</h1>
+    <p class="sub" id="loginSub">Sign in to your evidence workbench</p>
+    <form class="logincard" id="loginForm">
+      <div class="field" id="nameField" hidden><label>Name</label><input id="loginName" type="text" autocomplete="name"></div>
+      <div class="field"><label>Email</label><input id="loginEmail" type="email" placeholder="you@lab.example" autocomplete="username"></div>
+      <div class="field"><label>Password</label><input id="loginPass" type="password" placeholder="at least 8 characters" autocomplete="current-password"></div>
+      <div class="err" id="loginErr"></div>
+      <button class="submit" type="submit" id="loginSubmit" style="width:100%">Sign in</button>
+      <div class="demo">
+        <button type="button" id="toggleMode">New here? Create an account</button>
+      </div>
+    </form>
+    <p class="hint" style="max-width:400px">Turn one biomedical question into a cited, evidence-graded literature review — grounded in live PubMed, private to your account.</p>
+  </section>
+</main>
+
+<!-- ================= HOME ================= -->
+<main class="app hidden" id="homeView">
+  <div class="acctrow" id="acctHome"></div>
+  <section class="home">
+    <span class="eyebrow"><span class="dot"></span>Clinical-Evidence Research Assistant</span>
+    <h1 class="wordmark logo">SOLACE</h1>
+    <div class="rule"></div>
+    <p class="tagline">One biomedical question in. A structured, fully-cited, evidence-graded literature review out — the kind you can defend, not a chat answer you have to re-verify.</p>
+
+    <div class="querywrap">
+      <div class="querycard">
+        <div class="bar"><span class="label">Research question</span></div>
+        <textarea class="query" id="queryInput" placeholder="e.g. Does metformin reduce cancer incidence in patients with type 2 diabetes?"></textarea>
+      </div>
+      <div class="actions">
+        <button class="submit" id="submitBtn">Run review →</button>
+      </div>
+      <div class="hint">Pipeline: <b>decompose · retrieve · corroborate · grade · synthesize</b> — every claim traced to its source.</div>
+    </div>
+
+    <div class="chips" id="exampleChips">
+      <button class="chip">What pathways link APOE4 to Alzheimer's disease?</button>
+      <button class="chip">Is vitamin D supplementation effective for preventing respiratory infections?</button>
+      <button class="chip">Does the gut microbiome influence response to immunotherapy in melanoma?</button>
+    </div>
+  </section>
+</main>
+
+<!-- ================= RESULTS ================= -->
+<main class="app hidden" id="resultsView">
+  <div class="topbar">
+    <div class="left">
+      <span class="wordmark brand" id="brandHome" title="Back to home">SOLACE</span>
+      <span class="kicker">Evidence Workbench</span>
+    </div>
+    <div class="icons" id="resultIcons">
+      <button class="iconbtn" id="backBtn" title="Back"><span class="ic">‹</span> Back</button>
+      <button class="iconbtn" id="logBtn" title="Execution log"><span class="ic">◷</span> Log</button>
+      <button class="iconbtn primary" id="downloadBtn" title="Download as single PDF"><span class="ic">↓</span> PDF</button>
+    </div>
+  </div>
+
+  <div class="qbanner">
+    <span class="label">Question</span>
+    <span class="qtext" id="questionText">Does metformin reduce cancer incidence in patients with type 2 diabetes?</span>
+  </div>
+
+  <div class="tabs" role="tablist" id="tabBar">
+    <button class="tab" role="tab" data-tab="answer" aria-selected="true">Answer</button>
+    <button class="tab" role="tab" data-tab="explanation" aria-selected="false">Explanation</button>
+    <button class="tab" role="tab" data-tab="citations" aria-selected="false">Citations</button>
+    <button class="tab" role="tab" data-tab="stats" aria-selected="false">Stats</button>
+  </div>
+
+  <!-- ANSWER -->
+  <section class="panel" id="tab-answer" role="tabpanel">
+    <h2>Answer</h2>
+    <p class="dek">Synthesized from verified claims only · every claim graded and cited to its source.</p>
+    <div class="meta" id="answerMeta"></div>
+    <div id="answerNarrative"></div>
+  </section>
+
+  <!-- EXPLANATION -->
+  <section class="panel hidden" id="tab-explanation" role="tabpanel">
+    <h2>Detailed Explanation</h2>
+    <p class="dek">Research-level synthesis from the verified claims, with inline PMID citations.</p>
+    <div id="explanationBody"></div>
+  </section>
+
+  <!-- CITATIONS -->
+  <section class="panel hidden" id="tab-citations" role="tabpanel">
+    <h2>Citation Table</h2>
+    <p class="dek">Every row is a real PubMed source. Confidence reflects per-claim evidence grading; relevance is the retrieval score.</p>
+    <div style="overflow-x:auto">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:54px">Sr. No</th>
+          <th style="width:150px">PubMed ID / Source ID</th>
+          <th>Title of Paper</th>
+          <th style="width:160px">Journal Name</th>
+          <th style="width:120px">Confidence</th>
+          <th style="width:120px">Relevance %</th>
+        </tr>
+      </thead>
+      <tbody id="citeBody"></tbody>
+    </table>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <section class="panel hidden" id="tab-stats" role="tabpanel">
+    <h2>Run Statistics &amp; Pipeline Trace</h2>
+    <p class="dek">Real per-run metrics and the per-agent trace. (RAGAS quality metrics are computed offline, not per request.)</p>
+    <div class="grid2" style="margin-top:14px" id="statsCards"></div>
+    <h3>Per-agent pipeline trace</h3>
+    <div style="overflow-x:auto">
+    <table>
+      <thead><tr><th>Stage</th><th>Agent</th><th>Model</th><th>Latency</th><th>Tokens</th><th>Status</th></tr></thead>
+      <tbody id="statsTrace"></tbody>
+    </table>
+    </div>
+    <p class="footnote" id="statsNote"></p>
+  </section>
+</main>
+
+
+<!-- ================= LOG slide-over ================= -->
+<div class="scrim" id="scrim"></div>
+<aside class="logpanel" id="logPanel" aria-hidden="true">
+  <div class="loghead">
+    <div>
+      <h3>Execution Log</h3>
+      <p>Agents triggered, in order, with phase timing</p>
+    </div>
+    <button class="logclose" id="logClose" title="Close">×</button>
+  </div>
+  <div class="logmeta">
+    <div><span class="label">Pipeline</span><b>7 stages</b></div>
+    <div><span class="label">Mode</span><b style="color:var(--brass)">degraded</b></div>
+  </div>
+  <div class="logbody">
+    <div class="gantt-h"><span>Agent</span><span>Timeline (sequential)</span></div>
+    <div id="ganttRows"></div>
+    <div class="logflag" id="logFlag" hidden></div>
+    <div class="logtotal"><span class="label">Total wall-clock</span><b id="logTotal">26.2 s</b></div>
+  </div>
+</aside>
+
+<div class="toast" id="toast">Preparing your PDF…</div>
+
+<div class="overlay" id="loadingOverlay">
+  <div class="box">
+    <div class="spinner"></div>
+    <h3>Running the evidence pipeline</h3>
+    <p>Decomposing · retrieving from PubMed · corroborating · grading · synthesizing. This usually takes 10–40 seconds.</p>
+    <div class="steps" id="loadingSteps"></div>
+  </div>
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>
