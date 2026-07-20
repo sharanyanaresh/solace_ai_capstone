@@ -1,0 +1,27 @@
+# secrets & local env
+.env
+*.env.local
+
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.eggs/
+
+# local db / builds
+*.db
+*.sqlite3
+solace_dev.db
+/dist/
+/build/
+
+# os / editor / local tooling
+.DS_Store
+.idea/
+.vscode/
+.claude/
+
+# scratch
+*.log
